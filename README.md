@@ -1,3 +1,3 @@
 # CPU-SCHEDULING-VISUALIZATION
 
-![Surprise image](images/prank.png)
+![Surprise image](prank.png)
