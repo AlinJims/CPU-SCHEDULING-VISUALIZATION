@@ -1,5 +1,6 @@
 from src.process import Process
 from src.fcfs import simulate_fcfs
+from src.sjf import simulate_sjf
 
 def print_table(processes):
     print("\nProcess Table:")
@@ -22,18 +23,34 @@ def print_gantt(gantt_chart):
         print(f"{start:<5}", end='')
     print(f"{gantt_chart[-1][2]}")
 
-def main():
-    print("CPU Scheduling Simulator - FCFS")
+def get_processes():
     n = int(input("Enter number of processes: "))
     processes = []
-
     for i in range(n):
         at = int(input(f"Arrival time for P{i}: "))
         bt = int(input(f"Burst time for P{i}: "))
         processes.append(Process(i, at, bt))
+    return processes
 
-    gantt_chart = simulate_fcfs(processes)
-    print_gantt(gantt_chart)
+def main():
+    print("CPU Scheduling Simulator")
+    print("1. First Come First Serve (FCFS)")
+    print("2. Shortest Job First (SJF - Non-preemptive)")
+    choice = input("Choose a scheduling algorithm [1-2]: ")
+
+    processes = get_processes()
+
+    if choice == '1':
+        gantt = simulate_fcfs(processes)
+        print("\n--- FCFS Scheduling ---")
+    elif choice == '2':
+        gantt = simulate_sjf(processes)
+        print("\n--- SJF Scheduling ---")
+    else:
+        print("Invalid choice.")
+        return
+
+    print_gantt(gantt)
     print_table(processes)
 
 if __name__ == "__main__":
