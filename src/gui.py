@@ -51,8 +51,12 @@ class SchedulerGUI:
         sim_frame.pack(side="left", fill="both", expand=True)
 
         ttk.Label(sim_frame, text="Choose Algorithm (FCFS, SJF, SRTF)").pack(anchor="w")
-        algo_dropdown = ttk.Combobox(sim_frame, textvariable=self.algorithm, values=["FCFS", "SJF", "SRTF"], state="readonly")
+        algo_dropdown = ttk.Combobox(sim_frame, textvariable=self.algorithm, values=["FCFS", "SJF", "SRTF", "RR", "MLFQ"], state="readonly")
         algo_dropdown.pack(fill="x")
+
+        ttk.Label(sim_frame, text="Time Quantum (for RR only):").pack(anchor="w")
+        self.quantum_entry = ttk.Entry(sim_frame)
+        self.quantum_entry.pack(fill="x", pady=2)
 
         ttk.Button(sim_frame, text="Simulate ▶", command=self.run_scheduling).pack(pady=10)
         ttk.Button(sim_frame, text="Dark Mode", command=self.toggle_dark_mode).pack()
@@ -152,8 +156,18 @@ class SchedulerGUI:
                 return
 
         algo = self.algorithm.get()
+        quantum = None
+        if algo == "RR":
+            try:
+                quantum = int(self.quantum_entry.get())
+                if quantum <= 0:
+                    raise ValueError
+            except ValueError:
+                messagebox.showerror("Invalid Quantum", "Please enter a valid positive integer for time quantum.")
+                return
+
         try:
-            result = run_scheduling(algo, processes)
+            result = run_scheduling(algo, processes, quantum)
             if isinstance(result, tuple) and len(result) == 2:
                 gantt, metrics = result
             else:
@@ -177,6 +191,7 @@ class SchedulerGUI:
 
         self.gantt_canvas.delete("all")
         self.animate_gantt_chart(gantt)
+
 
     def animate_gantt_chart(self, gantt, index=0, x=10):
         if not gantt:
