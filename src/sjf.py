@@ -1,4 +1,4 @@
-def simulate_sjf(processes):
+def sjf_scheduling(processes):
     processes.sort(key=lambda p: (p.arrival_time, p.burst_time))
     time = 0
     completed = 0

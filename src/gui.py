@@ -8,85 +8,136 @@ class SchedulerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("CPU Scheduling Visualizer")
+        self.root.geometry("1100x700")
         self.process_entries = []
+        self.algorithm = tk.StringVar(value="FCFS")
+        self.dark_mode = False
 
-        self.algorithm = tk.StringVar()
-        self.algorithm.set("FCFS")
+        self.style = ttk.Style()
 
-        self.setup_ui()
+        self.main_frame = ttk.Frame(self.root, padding=10)
+        self.main_frame.pack(fill="both", expand=True)
 
-    def generate_random_processes(self, count=5):
-        for widgets in self.table_frame.winfo_children():
-            widgets.destroy()
-        self.process_entries.clear()
+        header = ttk.Label(self.main_frame, text="CPU Scheduling Visualizer", font=("Segoe UI", 18, "bold"))
+        header.pack(pady=10)
 
-        for i in range(count):
-            pid_entry = ttk.Entry(self.table_frame, width=5)
-            at_entry = ttk.Entry(self.table_frame, width=10)
-            bt_entry = ttk.Entry(self.table_frame, width=10)
+        top_layout = ttk.Frame(self.main_frame)
+        top_layout.pack(fill="x", padx=10, pady=10)
 
-            pid = f"P{i+1}"
-            arrival = random.randint(0, 10)
-            burst = random.randint(1, 10)
+        config_frame = ttk.LabelFrame(top_layout, text="Process Configuration")
+        config_frame.pack(side="left", fill="y", padx=(0, 10))
 
-            pid_entry.insert(0, pid)
-            at_entry.insert(0, str(arrival))
-            bt_entry.insert(0, str(burst))
+        ttk.Label(config_frame, text="Arrival Time:").pack(anchor="w")
+        self.arrival_entry = ttk.Entry(config_frame)
+        self.arrival_entry.pack(fill="x")
 
-            pid_entry.grid(row=i, column=0, padx=5, pady=5)
-            at_entry.grid(row=i, column=1, padx=5, pady=5)
-            bt_entry.grid(row=i, column=2, padx=5, pady=5)
+        ttk.Label(config_frame, text="Execution Time:").pack(anchor="w")
+        self.burst_entry = ttk.Entry(config_frame)
+        self.burst_entry.pack(fill="x")
 
-            self.process_entries.append((pid_entry, at_entry, bt_entry))
+        btn_frame = ttk.Frame(config_frame)
+        btn_frame.pack(fill="x", pady=5)
 
-    def setup_ui(self):
-        algo_label = ttk.Label(self.root, text="Select Algorithm:")
-        algo_label.grid(row=0, column=0, padx=10, pady=10)
-        algo_menu = ttk.Combobox(self.root, textvariable=self.algorithm, values=["FCFS", "SJF"], state="readonly")
-        algo_menu.grid(row=0, column=1, padx=10, pady=10)
+        ttk.Button(btn_frame, text="Generate Random", command=self.generate_random_processes).pack(fill="x", pady=2)
+        ttk.Button(btn_frame, text="Enqueue +", command=self.add_process_row).pack(fill="x", pady=2)
+        ttk.Button(btn_frame, text="Update", command=self.update_last_process).pack(fill="x", pady=2)
+        ttk.Button(btn_frame, text="Clear All", command=self.clear_all_processes).pack(fill="x", pady=2)
 
-        self.table_frame = ttk.LabelFrame(self.root, text="Processes (PID, Arrival Time, Burst Time)")
-        self.table_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
-
+        self.table_frame = ttk.Frame(config_frame)
+        self.table_frame.pack(fill="x", pady=10)
         self.add_process_row()
 
-        add_button = ttk.Button(self.root, text="Add Process", command=self.add_process_row)
-        add_button.grid(row=2, column=0, padx=10, pady=10)
+        sim_frame = ttk.LabelFrame(top_layout, text="Simulation")
+        sim_frame.pack(side="left", fill="both", expand=True)
 
-        generate_button = ttk.Button(self.root, text="Generate Random", command=self.generate_random_processes)
-        generate_button.grid(row=2, column=2, padx=10, pady=10)
+        ttk.Label(sim_frame, text="Choose Algorithm (FCFS, SJF, SRTF)").pack(anchor="w")
+        algo_dropdown = ttk.Combobox(sim_frame, textvariable=self.algorithm, values=["FCFS", "SJF", "SRTF"], state="readonly")
+        algo_dropdown.pack(fill="x")
 
-        run_button = ttk.Button(self.root, text="Run", command=self.run_scheduling)
-        run_button.grid(row=2, column=1, padx=10, pady=10)
+        ttk.Button(sim_frame, text="Simulate ▶", command=self.run_scheduling).pack(pady=10)
+        ttk.Button(sim_frame, text="Dark Mode", command=self.toggle_dark_mode).pack()
 
-        self.result_box = tk.Text(self.root, height=10, width=60)
-        self.result_box.grid(row=3, column=0, columnspan=3, padx=10, pady=10)
+        self.result_box = tk.Text(sim_frame, height=12, font=("Consolas", 10), wrap="word")
+        self.result_box.pack(fill="both", expand=True, pady=5)
 
-        canvas_frame = ttk.Frame(self.root)
-        canvas_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        self.canvas_frame = ttk.Frame(self.main_frame)
+        self.canvas_frame.pack(fill="both", expand=True)
 
-        self.canvas_scrollbar = ttk.Scrollbar(canvas_frame, orient="horizontal")
+        self.canvas_scrollbar = ttk.Scrollbar(self.canvas_frame, orient="horizontal")
         self.canvas_scrollbar.pack(side="bottom", fill="x")
 
-        self.gantt_canvas = tk.Canvas(canvas_frame, height=120, bg="white", xscrollcommand=self.canvas_scrollbar.set)
+        self.gantt_canvas = tk.Canvas(self.canvas_frame, height=140, bg="white", xscrollcommand=self.canvas_scrollbar.set)
         self.gantt_canvas.pack(side="left", fill="both", expand=True)
-
         self.canvas_scrollbar.config(command=self.gantt_canvas.xview)
 
-        self.root.grid_rowconfigure(4, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
+    def toggle_dark_mode(self):
+        self.dark_mode = not self.dark_mode
+        self.set_theme("dark" if self.dark_mode else "light")
+
+    def set_theme(self, mode):
+        bg = "#1e1e1e" if mode == "dark" else "white"
+        fg = "#f0f0f0" if mode == "dark" else "black"
+        self.root.configure(bg=bg)
+        self.style.configure("TFrame", background=bg)
+        self.style.configure("TLabel", background=bg, foreground=fg)
+        self.style.configure("TLabelFrame", background=bg, foreground=fg)
+        self.style.configure("TButton", background=bg, foreground=fg)
+        self.style.configure("TCombobox", fieldbackground=bg, foreground=fg)
+        self.result_box.configure(bg=bg, fg=fg, insertbackground=fg)
+        self.gantt_canvas.configure(bg=bg)
 
     def add_process_row(self):
         row = len(self.process_entries)
         pid_entry = ttk.Entry(self.table_frame, width=5)
         at_entry = ttk.Entry(self.table_frame, width=10)
         bt_entry = ttk.Entry(self.table_frame, width=10)
-
-        pid_entry.grid(row=row, column=0, padx=5, pady=5)
-        at_entry.grid(row=row, column=1, padx=5, pady=5)
-        bt_entry.grid(row=row, column=2, padx=5, pady=5)
-
+        pid_entry.grid(row=row, column=0, padx=5, pady=2)
+        at_entry.grid(row=row, column=1, padx=5, pady=2)
+        bt_entry.grid(row=row, column=2, padx=5, pady=2)
         self.process_entries.append((pid_entry, at_entry, bt_entry))
+
+    def generate_random_processes(self, count=5):
+        for widgets in self.table_frame.winfo_children():
+            widgets.destroy()
+        self.process_entries.clear()
+        for i in range(count):
+            pid_entry = ttk.Entry(self.table_frame, width=5)
+            at_entry = ttk.Entry(self.table_frame, width=10)
+            bt_entry = ttk.Entry(self.table_frame, width=10)
+            pid = f"P{i+1}"
+            arrival = random.randint(0, 10)
+            burst = random.randint(1, 10)
+            pid_entry.insert(0, pid)
+            at_entry.insert(0, str(arrival))
+            bt_entry.insert(0, str(burst))
+            pid_entry.grid(row=i, column=0, padx=5, pady=2)
+            at_entry.grid(row=i, column=1, padx=5, pady=2)
+            bt_entry.grid(row=i, column=2, padx=5, pady=2)
+            self.process_entries.append((pid_entry, at_entry, bt_entry))
+
+    def update_last_process(self):
+        if not self.process_entries:
+            self.add_process_row()
+
+        pid = f"P{len(self.process_entries)}"
+        arrival = self.arrival_entry.get()
+        burst = self.burst_entry.get()
+
+        last_row = self.process_entries[-1]
+        last_row[0].delete(0, tk.END)
+        last_row[0].insert(0, pid)
+        last_row[1].delete(0, tk.END)
+        last_row[1].insert(0, arrival)
+        last_row[2].delete(0, tk.END)
+        last_row[2].insert(0, burst)
+
+    def clear_all_processes(self):
+        for entry in self.process_entries:
+            for widget in entry:
+                widget.destroy()
+        self.process_entries.clear()
+        self.result_box.delete(1.0, tk.END)
+        self.gantt_canvas.delete("all")
 
     def run_scheduling(self):
         processes = []
@@ -102,7 +153,12 @@ class SchedulerGUI:
 
         algo = self.algorithm.get()
         try:
-            gantt = run_scheduling(algo, processes)
+            result = run_scheduling(algo, processes)
+            if isinstance(result, tuple) and len(result) == 2:
+                gantt, metrics = result
+            else:
+                gantt = result
+                metrics = None
         except Exception as e:
             messagebox.showerror("Error", str(e))
             return
@@ -112,23 +168,32 @@ class SchedulerGUI:
         for pid, start, end in gantt:
             self.result_box.insert(tk.END, f"{pid}: {start} → {end}\n")
 
+        if metrics:
+            self.result_box.insert(tk.END, "\n=== Metrics ===\n")
+            for entry in metrics["details"]:
+                self.result_box.insert(tk.END, f"{entry['pid']}: AT={entry['at']} BT={entry['bt']} CT={entry['ct']} TAT={entry['tat']} RT={entry['rt']}\n")
+            self.result_box.insert(tk.END, f"\nAverage TAT: {metrics['avg_tat']:.2f}")
+            self.result_box.insert(tk.END, f"\nAverage RT: {metrics['avg_rt']:.2f}")
+
         self.gantt_canvas.delete("all")
         self.animate_gantt_chart(gantt)
 
     def animate_gantt_chart(self, gantt, index=0, x=10):
+        if not gantt:
+            return
         if index == 0:
             self.tick_labels = []
             total_time = gantt[-1][2]
             total_width = total_time * 30
-            self.gantt_canvas.config(scrollregion=(0, 0, total_width + 40, 120))
+            self.gantt_canvas.config(scrollregion=(0, 0, total_width + 40, 140))
 
         if index >= len(gantt):
             scale = 30
             height = 40
             for t in range(gantt[-1][2] + 1):
                 x_pos = 10 + t * scale
-                tick = self.gantt_canvas.create_text(x_pos, 80, text=str(t), font=("Arial", 8))
-                self.gantt_canvas.create_line(x_pos, 50, x_pos, 10 + height, fill="gray", dash=(2, 2))
+                tick = self.gantt_canvas.create_text(x_pos, 90, text=str(t), font=("Arial", 8))
+                self.gantt_canvas.create_line(x_pos, 50, x_pos, 50 + height, fill="gray", dash=(2, 2))
                 self.tick_labels.append(tick)
             return
 
@@ -136,12 +201,11 @@ class SchedulerGUI:
         scale = 30
         height = 40
         width = (end - start) * scale
-
         self.gantt_canvas.create_rectangle(x, 10, x + width, 10 + height,
                                            fill=f"#{hex(hash(pid) & 0xFFFFFF)[2:]:0>6}", outline="black")
         self.gantt_canvas.create_text(x + width // 2, 30, text=pid)
+        self.root.after(300, lambda: self.animate_gantt_chart(gantt, index + 1, x + width))
 
-        self.root.after(700, lambda: self.animate_gantt_chart(gantt, index + 1, x + width))
 
 if __name__ == "__main__":
     root = tk.Tk()

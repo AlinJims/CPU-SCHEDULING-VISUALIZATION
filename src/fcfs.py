@@ -1,4 +1,6 @@
-def simulate_fcfs(processes):
+# fcfs.py
+
+def fcfs_scheduling(processes):
     processes.sort(key=lambda p: p.arrival_time)
     time = 0
     gantt_chart = []
