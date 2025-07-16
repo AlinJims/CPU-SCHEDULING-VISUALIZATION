@@ -3,8 +3,33 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from process import Process
 from scheduler import run_scheduling
+from tkinter import filedialog
+from PIL import Image, ImageGrab
+
 
 class SchedulerGUI:
+    def export_metrics_csv(self):
+        if not hasattr(self, "last_metrics") or not self.last_metrics:
+            messagebox.showwarning("No Metrics", "No metrics available to export. Run a simulation first.")
+            return
+
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv",
+                                                 filetypes=[("CSV Files", "*.csv")],
+                                                 title="Save Metrics As")
+        if not file_path:
+            return
+
+        try:
+            with open(file_path, "w") as f:
+                f.write("PID,Arrival Time,Burst Time,Completion Time,TAT,RT\n")
+                for entry in self.last_metrics["details"]:
+                    f.write(f"{entry['pid']},{entry['at']},{entry['bt']},{entry['ct']},{entry['tat']},{entry['rt']}\n")
+                f.write(f"\nAverage TAT,{self.last_metrics['avg_tat']:.2f}\n")
+                f.write(f"Average RT,{self.last_metrics['avg_rt']:.2f}\n")
+            messagebox.showinfo("Success", f"Metrics saved as:\n{file_path}")
+        except Exception as e:
+            messagebox.showerror("Export Error", f"Failed to save metrics:\n{e}")
+
     def __init__(self, root):
         self.root = root
         self.root.title("CPU Scheduling Visualizer")
@@ -14,7 +39,6 @@ class SchedulerGUI:
         self.dark_mode = False
 
         self.style = ttk.Style()
-
         self.main_frame = ttk.Frame(self.root, padding=10)
         self.main_frame.pack(fill="both", expand=True)
 
@@ -50,8 +74,9 @@ class SchedulerGUI:
         sim_frame = ttk.LabelFrame(top_layout, text="Simulation")
         sim_frame.pack(side="left", fill="both", expand=True)
 
-        ttk.Label(sim_frame, text="Choose Algorithm (FCFS, SJF, SRTF)").pack(anchor="w")
-        algo_dropdown = ttk.Combobox(sim_frame, textvariable=self.algorithm, values=["FCFS", "SJF", "SRTF", "RR", "MLFQ"], state="readonly")
+        ttk.Label(sim_frame, text="Choose Algorithm").pack(anchor="w")
+        algo_dropdown = ttk.Combobox(sim_frame, textvariable=self.algorithm,
+                                     values=["FCFS", "SJF", "SRTF", "RR", "MLFQ"], state="readonly")
         algo_dropdown.pack(fill="x")
 
         ttk.Label(sim_frame, text="Time Quantum (for RR only):").pack(anchor="w")
@@ -60,8 +85,16 @@ class SchedulerGUI:
 
         ttk.Button(sim_frame, text="Simulate ▶", command=self.run_scheduling).pack(pady=10)
         ttk.Button(sim_frame, text="Dark Mode", command=self.toggle_dark_mode).pack()
+        ttk.Button(sim_frame, text="Export Gantt Chart as PNG", command=self.export_gantt_chart).pack(pady=5)
+        ttk.Button(sim_frame, text="Export Metrics as CSV", command=self.export_metrics_csv).pack(pady=5)
 
-        self.result_box = tk.Text(sim_frame, height=12, font=("Consolas", 10), wrap="word")
+
+
+       
+        self.step_log = tk.Text(sim_frame, height=6, font=("Consolas", 9), wrap="word")
+        self.step_log.pack(fill="both", expand=True, pady=5)
+
+        self.result_box = tk.Text(sim_frame, height=8, font=("Consolas", 10), wrap="word")
         self.result_box.pack(fill="both", expand=True, pady=5)
 
         self.canvas_frame = ttk.Frame(self.main_frame)
@@ -89,6 +122,7 @@ class SchedulerGUI:
         self.style.configure("TCombobox", fieldbackground=bg, foreground=fg)
         self.result_box.configure(bg=bg, fg=fg, insertbackground=fg)
         self.gantt_canvas.configure(bg=bg)
+        self.step_log.configure(bg=bg, fg=fg, insertbackground=fg)
 
     def add_process_row(self):
         row = len(self.process_entries)
@@ -141,6 +175,7 @@ class SchedulerGUI:
                 widget.destroy()
         self.process_entries.clear()
         self.result_box.delete(1.0, tk.END)
+        self.step_log.delete(1.0, tk.END)
         self.gantt_canvas.delete("all")
 
     def run_scheduling(self):
@@ -165,6 +200,8 @@ class SchedulerGUI:
             except ValueError:
                 messagebox.showerror("Invalid Quantum", "Please enter a valid positive integer for time quantum.")
                 return
+            
+        self.last_metrics = None
 
         try:
             result = run_scheduling(algo, processes, quantum)
@@ -181,17 +218,19 @@ class SchedulerGUI:
         self.result_box.insert(tk.END, f"=== {algo} Gantt Chart ===\n")
         for pid, start, end in gantt:
             self.result_box.insert(tk.END, f"{pid}: {start} → {end}\n")
-
+        
+        self.last_metrics = metrics 
+ 
         if metrics:
             self.result_box.insert(tk.END, "\n=== Metrics ===\n")
-            for entry in metrics["details"]:
-                self.result_box.insert(tk.END, f"{entry['pid']}: AT={entry['at']} BT={entry['bt']} CT={entry['ct']} TAT={entry['tat']} RT={entry['rt']}\n")
+            for entry in self.last_metrics.get("details", []):
+                self.result_box.insert(tk.END, f"{entry['pid']}: AT={entry['at']} BT={entry['bt']} CT={entry['ct']} "
+                                               f"TAT={entry['tat']} RT={entry['rt']}\n")
             self.result_box.insert(tk.END, f"\nAverage TAT: {metrics['avg_tat']:.2f}")
             self.result_box.insert(tk.END, f"\nAverage RT: {metrics['avg_rt']:.2f}")
 
         self.gantt_canvas.delete("all")
         self.animate_gantt_chart(gantt)
-
 
     def animate_gantt_chart(self, gantt, index=0, x=10):
         if not gantt:
@@ -201,6 +240,7 @@ class SchedulerGUI:
             total_time = gantt[-1][2]
             total_width = total_time * 30
             self.gantt_canvas.config(scrollregion=(0, 0, total_width + 40, 140))
+            self.step_log.delete(1.0, tk.END)
 
         if index >= len(gantt):
             scale = 30
@@ -216,10 +256,38 @@ class SchedulerGUI:
         scale = 30
         height = 40
         width = (end - start) * scale
+
         self.gantt_canvas.create_rectangle(x, 10, x + width, 10 + height,
                                            fill=f"#{hex(hash(pid) & 0xFFFFFF)[2:]:0>6}", outline="black")
         self.gantt_canvas.create_text(x + width // 2, 30, text=pid)
+
+        self.step_log.insert(tk.END, f"At time {start}: {pid} starts\n")
+        self.step_log.see(tk.END)
+
         self.root.after(300, lambda: self.animate_gantt_chart(gantt, index + 1, x + width))
+
+    def export_gantt_chart(self):
+        # Ask where to save the PNG
+        file_path = filedialog.asksaveasfilename(defaultextension=".png",
+                                                 filetypes=[("PNG Files", "*.png")],
+                                                 title="Save Gantt Chart As")
+        if not file_path:
+            return 
+
+        
+        self.root.update() 
+        x = self.gantt_canvas.winfo_rootx()
+        y = self.gantt_canvas.winfo_rooty()
+        x1 = x + self.gantt_canvas.winfo_width()
+        y1 = y + self.gantt_canvas.winfo_height()
+
+        # Capture the canvas as an image
+        try:
+            img = ImageGrab.grab(bbox=(x, y, x1, y1))
+            img.save(file_path)
+            messagebox.showinfo("Success", f"Gantt chart saved as:\n{file_path}")
+        except Exception as e:
+            messagebox.showerror("Export Error", f"Failed to export image:\n{e}")
 
 
 if __name__ == "__main__":
