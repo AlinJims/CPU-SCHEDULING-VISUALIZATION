@@ -7,6 +7,8 @@ from tkinter import filedialog
 from PIL import Image, ImageGrab
 
 
+
+
 class SchedulerGUI:
     def export_metrics_csv(self):
         if not hasattr(self, "last_metrics") or not self.last_metrics:
@@ -82,6 +84,11 @@ class SchedulerGUI:
         ttk.Label(sim_frame, text="Time Quantum (for RR only):").pack(anchor="w")
         self.quantum_entry = ttk.Entry(sim_frame)
         self.quantum_entry.pack(fill="x", pady=2)
+
+        ttk.Label(sim_frame, text="Context Switch Delay:").pack(anchor="w")
+        self.context_entry = ttk.Entry(sim_frame)
+        self.context_entry.insert(0, "1")
+        self.context_entry.pack(fill="x", pady=2)
 
         ttk.Button(sim_frame, text="Simulate ▶", command=self.run_scheduling).pack(pady=10)
         ttk.Button(sim_frame, text="Dark Mode", command=self.toggle_dark_mode).pack()
@@ -203,8 +210,17 @@ class SchedulerGUI:
             
         self.last_metrics = None
 
+        global CONTEXT_SWITCH_DELAY
         try:
-            result = run_scheduling(algo, processes, quantum)
+            CONTEXT_SWITCH_DELAY = int(self.context_entry.get())
+            if CONTEXT_SWITCH_DELAY < 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Invalid Context Switch Delay", "Please enter a non-negative integer.")
+            return
+
+        try:
+            result = run_scheduling(algo, processes, quantum=quantum, context_delay=CONTEXT_SWITCH_DELAY)
             if isinstance(result, tuple) and len(result) == 2:
                 gantt, metrics = result
             else:
@@ -220,7 +236,26 @@ class SchedulerGUI:
             self.result_box.insert(tk.END, f"{pid}: {start} → {end}\n")
         
         self.last_metrics = metrics 
- 
+
+
+        if gantt and CONTEXT_SWITCH_DELAY > 0:
+            new_gantt = []
+            last_end = 0
+            for i, (pid, start, end) in enumerate(gantt):
+                if i > 0 and start > last_end:
+                
+                    pass
+                elif i > 0:
+              
+                    delay_start = last_end
+                    delay_end = last_end + CONTEXT_SWITCH_DELAY
+                    new_gantt.append(("-", delay_start, delay_end))
+                    start += CONTEXT_SWITCH_DELAY
+                    end += CONTEXT_SWITCH_DELAY
+                new_gantt.append((pid, start, end))
+                last_end = end
+            gantt = new_gantt
+
         if metrics:
             self.result_box.insert(tk.END, "\n=== Metrics ===\n")
             for entry in self.last_metrics.get("details", []):
@@ -243,13 +278,6 @@ class SchedulerGUI:
             self.step_log.delete(1.0, tk.END)
 
         if index >= len(gantt):
-            scale = 30
-            height = 40
-            for t in range(gantt[-1][2] + 1):
-                x_pos = 10 + t * scale
-                tick = self.gantt_canvas.create_text(x_pos, 90, text=str(t), font=("Arial", 8))
-                self.gantt_canvas.create_line(x_pos, 50, x_pos, 50 + height, fill="gray", dash=(2, 2))
-                self.tick_labels.append(tick)
             return
 
         pid, start, end = gantt[index]
@@ -257,17 +285,30 @@ class SchedulerGUI:
         height = 40
         width = (end - start) * scale
 
-        self.gantt_canvas.create_rectangle(x, 10, x + width, 10 + height,
-                                           fill=f"#{hex(hash(pid) & 0xFFFFFF)[2:]:0>6}", outline="black")
-        self.gantt_canvas.create_text(x + width // 2, 30, text=pid)
+        if pid == "-":
+            color = "#cccccc"
+            label = "CS"
+        else:
+            color = f"#{hex(hash(pid) & 0xFFFFFF)[2:]:0>6}"
+            label = pid
+
+        self.gantt_canvas.create_rectangle(x, 10, x + width, 10 + height, fill=color, outline="black")
+        self.gantt_canvas.create_text(x + width // 2, 30, text=label)
+
+        self.gantt_canvas.create_text(x, 60, text=str(start), anchor="w", font=("Arial", 9))
+
+   
+        if index == len(gantt) - 1:
+            self.gantt_canvas.create_text(x + width, 60, text=str(end), anchor="e", font=("Arial", 9))
 
         self.step_log.insert(tk.END, f"At time {start}: {pid} starts\n")
         self.step_log.see(tk.END)
 
         self.root.after(300, lambda: self.animate_gantt_chart(gantt, index + 1, x + width))
 
+
     def export_gantt_chart(self):
-        # Ask where to save the PNG
+
         file_path = filedialog.asksaveasfilename(defaultextension=".png",
                                                  filetypes=[("PNG Files", "*.png")],
                                                  title="Save Gantt Chart As")
@@ -281,7 +322,7 @@ class SchedulerGUI:
         x1 = x + self.gantt_canvas.winfo_width()
         y1 = y + self.gantt_canvas.winfo_height()
 
-        # Capture the canvas as an image
+   
         try:
             img = ImageGrab.grab(bbox=(x, y, x1, y1))
             img.save(file_path)

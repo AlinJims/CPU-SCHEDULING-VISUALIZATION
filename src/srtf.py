@@ -1,6 +1,6 @@
 import heapq
 
-def srtf_scheduling(processes):
+def srtf_scheduling(processes, context_delay=0):
     processes.sort(key=lambda p: p.arrival_time)
     n = len(processes)
     completed = 0
@@ -15,6 +15,7 @@ def srtf_scheduling(processes):
     response_times = {}
     completion_times = {}
     is_started = set()
+    prev_pid = None
 
     while completed < n:
         while idx < n and processes[idx].arrival_time <= current_time:
@@ -24,6 +25,11 @@ def srtf_scheduling(processes):
         if ready_queue:
             rem_bt, _, current_process = heapq.heappop(ready_queue)
             pid = current_process.pid
+
+      
+            if prev_pid is not None and prev_pid != pid and context_delay > 0:
+                gantt_chart.append(("CS", current_time, current_time + context_delay))
+                current_time += context_delay
 
             if pid not in is_started:
                 response_times[pid] = current_time - current_process.arrival_time
@@ -42,6 +48,8 @@ def srtf_scheduling(processes):
             else:
                 completed += 1
                 completion_times[pid] = current_time
+
+            prev_pid = pid  
         else:
             current_time += 1
 

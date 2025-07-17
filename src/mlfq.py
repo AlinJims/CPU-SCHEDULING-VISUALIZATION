@@ -1,7 +1,6 @@
-# mlfq.py
 from collections import deque
 
-def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 24, float('inf')]):
+def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 24, float('inf')], context_delay=0):
     num_levels = len(time_quantums)
     queues = [deque() for _ in range(num_levels)]
     time = 0
@@ -10,6 +9,7 @@ def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 
     gantt = []
     completed = 0
     response_time_set = set()
+    last_pid = None  
 
     for p in processes:
         p.queue_level = 0
@@ -26,6 +26,11 @@ def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 
                 q = queues[level]
                 p = q.popleft()
 
+             
+                if last_pid is not None and last_pid != p.pid and context_delay > 0:
+                    gantt.append(("CS", time, time + context_delay))
+                    time += context_delay
+
                 if p.pid not in response_time_set:
                     p.response_time = time - p.arrival_time
                     response_time_set.add(p.pid)
@@ -40,7 +45,7 @@ def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 
                 p.remaining_time -= qtime
                 p.remaining_allotment -= qtime
 
-                # Enqueue newly arrived processes
+            
                 while idx < n and processes[idx].arrival_time <= time:
                     processes[idx].queue_level = 0
                     processes[idx].remaining_allotment = allotments[0]
@@ -51,15 +56,15 @@ def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 
                     p.completion_time = time
                     completed += 1
                 else:
-                    # Move to lower level if allotment exhausted
                     if p.remaining_allotment <= 0 and p.queue_level + 1 < num_levels:
                         p.queue_level += 1
                         p.remaining_allotment = allotments[p.queue_level]
                     queues[p.queue_level].append(p)
 
-                break  # exit outer loop to recheck from top-level queues
+                last_pid = p.pid  
+                break
         else:
-            # All queues empty but there are unprocessed jobs coming later
+         
             if idx < n:
                 queues[0].append(processes[idx])
                 time = processes[idx].arrival_time

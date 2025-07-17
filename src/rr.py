@@ -1,7 +1,7 @@
 # rr.py
 from collections import deque
 
-def rr_scheduling(processes, quantum):
+def rr_scheduling(processes, quantum, context_delay=0):
     queue = deque()
     processes.sort(key=lambda p: p.arrival_time)
     time = 0
@@ -14,6 +14,7 @@ def rr_scheduling(processes, quantum):
 
     queue.append(processes[0])
     idx = 1
+    prev_pid = None  
 
     while completed < n:
         if not queue:
@@ -24,7 +25,13 @@ def rr_scheduling(processes, quantum):
             continue
 
         p = queue.popleft()
+
+        if prev_pid is not None and prev_pid != p.pid and context_delay > 0:
+            gantt.append(("CS", time, time + context_delay))
+            time += context_delay
+
         start = time
+
         if p.pid not in response_time_set:
             p.response_time = start - p.arrival_time
             response_time_set.add(p.pid)
@@ -34,15 +41,19 @@ def rr_scheduling(processes, quantum):
         p.remaining_time -= run_time
         gantt.append((p.pid, start, time))
 
+     
         while idx < n and processes[idx].arrival_time <= time:
             queue.append(processes[idx])
             idx += 1
 
+    
         if p.remaining_time > 0:
             queue.append(p)
         else:
             p.completion_time = time
             completed += 1
+
+        prev_pid = p.pid  
 
     total_tat = 0
     total_rt = 0
