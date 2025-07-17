@@ -7,7 +7,7 @@ Shortest Remaining Time First(SRTF), Round Robin, and
 Multilevel Feedback Queue(MLFQ) works. This programs lets you simulate and give a visualization of the order process, completion lines, and compute the scheduling metrics.
 </p>
 
-## About The Project
+## 📘 About The Project
 
 This program simulates how CPU Scheduling Algorithms work:
 
@@ -32,7 +32,7 @@ It allows users to:
 - Compute turnaround & waiting time
 - Export results via screenshot
 
-## Built With
+## 🛠️ Built With
 
 - [Python 3](https://www.python.org/)
 - [Tkinter GUI](https://docs.python.org/3/library/tkinter.html)
@@ -50,9 +50,9 @@ CPU-SCHEDULING-VISUALIZATION/
     └── For testing and validating CPU Scheduling logic
 ```
 
-## Getting Started
+## 🚀 Getting Started
 
-### Prerequisites
+### 📋 Prerequisites
 
 Ensure you have Python 3 installed on your system. Then install the required dependencies:
 
@@ -60,7 +60,7 @@ Ensure you have Python 3 installed on your system. Then install the required dep
 pip install pillow
 ```
 
-### Installation
+### 📥 Installation
 
 1. **Clone the repository**
    ```bash
@@ -98,6 +98,5 @@ pip install pillow
 * [Tkinter Documentation](https://docs.python.org/3/library/tkinter.html)
 * [Pillow Documentation](https://python-pillow.org/)
 * [GeeksforGeeks CPU Scheduling](https://www.geeksforgeeks.org/cpu-scheduling-in-operating-systems/)
-* Thanks to all contributors who helped improve this project
 * Inspired by OS coursework and CPU scheduling theory by Sir Bayocot
 
