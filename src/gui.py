@@ -6,9 +6,6 @@ from scheduler import run_scheduling
 from tkinter import filedialog
 from PIL import Image, ImageGrab
 
-
-
-
 class SchedulerGUI:
     def export_metrics_csv(self):
         if not hasattr(self, "last_metrics") or not self.last_metrics:
@@ -35,12 +32,27 @@ class SchedulerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("CPU Scheduling Visualizer")
-        self.root.geometry("1100x700")
+        self.root.geometry("1100x750")
+        self.root.resizable(False, False)
         self.process_entries = []
         self.algorithm = tk.StringVar(value="FCFS")
         self.dark_mode = False
 
         self.style = ttk.Style()
+        self.style.configure("TButton", font=("Segoe UI", 10))
+        self.style.configure("Modern.TButton",
+                             font=("Segoe UI", 10),
+                             background="#e6f0fa",
+                             foreground="black",
+                             padding=6,
+                             relief="flat")
+        self.style.map("Modern.TButton",
+                       background=[("active", "#003366"), ("pressed", "#002244")],
+                       foreground=[("active", "#002244"), ("pressed", "white")])
+        self.style.configure("TLabel", font=("Segoe UI", 10))
+        self.style.configure("TEntry", font=("Segoe UI", 10))
+        self.style.configure("TCombobox", font=("Segoe UI", 10))
+
         self.main_frame = ttk.Frame(self.root, padding=10)
         self.main_frame.pack(fill="both", expand=True)
 
@@ -64,10 +76,10 @@ class SchedulerGUI:
         btn_frame = ttk.Frame(config_frame)
         btn_frame.pack(fill="x", pady=5)
 
-        ttk.Button(btn_frame, text="Generate Random", command=self.generate_random_processes).pack(fill="x", pady=2)
-        ttk.Button(btn_frame, text="Enqueue +", command=self.add_process_row).pack(fill="x", pady=2)
-        ttk.Button(btn_frame, text="Update", command=self.update_last_process).pack(fill="x", pady=2)
-        ttk.Button(btn_frame, text="Clear All", command=self.clear_all_processes).pack(fill="x", pady=2)
+        self.create_button(btn_frame, "Generate Random", self.generate_random_processes).pack(fill="x", pady=2)
+        self.create_button(btn_frame, "Enqueue +", self.add_process_row).pack(fill="x", pady=2)
+        self.create_button(btn_frame, "Update", self.update_last_process).pack(fill="x", pady=2)
+        self.create_button(btn_frame, "Clear All", self.clear_all_processes).pack(fill="x", pady=2)
 
         self.table_frame = ttk.Frame(config_frame)
         self.table_frame.pack(fill="x", pady=10)
@@ -90,14 +102,11 @@ class SchedulerGUI:
         self.context_entry.insert(0, "1")
         self.context_entry.pack(fill="x", pady=2)
 
-        ttk.Button(sim_frame, text="Simulate ▶", command=self.run_scheduling).pack(pady=10)
-        ttk.Button(sim_frame, text="Dark Mode", command=self.toggle_dark_mode).pack()
-        ttk.Button(sim_frame, text="Export Gantt Chart as PNG", command=self.export_gantt_chart).pack(pady=5)
-        ttk.Button(sim_frame, text="Export Metrics as CSV", command=self.export_metrics_csv).pack(pady=5)
+        self.create_button(sim_frame, "Simulate ▶", self.run_scheduling).pack(pady=10)
+        self.create_button(sim_frame, "Dark Mode", self.toggle_dark_mode).pack()
+        self.create_button(sim_frame, "Export Gantt Chart as PNG", self.export_gantt_chart).pack(pady=5)
+        self.create_button(sim_frame, "Export Metrics as CSV", self.export_metrics_csv).pack(pady=5)
 
-
-
-       
         self.step_log = tk.Text(sim_frame, height=6, font=("Consolas", 9), wrap="word")
         self.step_log.pack(fill="both", expand=True, pady=5)
 
@@ -107,12 +116,22 @@ class SchedulerGUI:
         self.canvas_frame = ttk.Frame(self.main_frame)
         self.canvas_frame.pack(fill="both", expand=True)
 
-        self.canvas_scrollbar = ttk.Scrollbar(self.canvas_frame, orient="horizontal")
-        self.canvas_scrollbar.pack(side="bottom", fill="x")
+        self.x_scroll = ttk.Scrollbar(self.canvas_frame, orient="horizontal")
+        self.x_scroll.pack(side="bottom", fill="x")
+        self.y_scroll = ttk.Scrollbar(self.canvas_frame, orient="vertical")
+        self.y_scroll.pack(side="right", fill="y")
 
-        self.gantt_canvas = tk.Canvas(self.canvas_frame, height=140, bg="white", xscrollcommand=self.canvas_scrollbar.set)
+        self.gantt_canvas = tk.Canvas(self.canvas_frame, height=140, bg="white",
+                                      xscrollcommand=self.x_scroll.set,
+                                      yscrollcommand=self.y_scroll.set)
         self.gantt_canvas.pack(side="left", fill="both", expand=True)
-        self.canvas_scrollbar.config(command=self.gantt_canvas.xview)
+
+        self.x_scroll.config(command=self.gantt_canvas.xview)
+        self.y_scroll.config(command=self.gantt_canvas.yview)
+
+    def create_button(self, parent, text, command):
+        btn = ttk.Button(parent, text=text, command=command, style="Modern.TButton")
+        return btn
 
     def toggle_dark_mode(self):
         self.dark_mode = not self.dark_mode
