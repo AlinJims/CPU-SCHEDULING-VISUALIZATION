@@ -85,6 +85,45 @@ pip install pillow
    ```bash
    python main.py
    ```
+## 🖼️ Screenshots
+
+### Main Application Interface
+![Main Interface](docs/images/maininterface.png)
+*The main window showing process input fields and algorithm selection*
+
+## 📊 Sample Input and Output
+
+### Sample Input Data
+
+Here's an example of process data you can input into the system:
+
+| Process ID | Arrival Time | Burst Time |
+|------------|--------------|------------|
+| P1         | 0            | 5          |
+| P2         | 2            | 3          |
+| P3         | 4            | 1          |
+
+### Expected Output Examples
+
+#### FCFS (First-Come, First-Served)
+![FCFS Gantt Chart](docs/images/fcfs.png)
+*Gantt chart showing First-Come, First-Served scheduling*
+
+#### SJF (Shortest Job First)
+![FCFS Gantt Chart](docs/images/sjf.png)
+*Gantt chart showing Shortest Job First*
+
+#### SRTF (Shortest Remaining Time First)
+![FCFS Gantt Chart](docs/images/srtf.png)
+*Gantt chart showing Shortest Remaining Time First scheduling*
+
+#### RR (Round Robin) - 3 Time Quantum
+![FCFS Gantt Chart](docs/images/rr.png)
+*Gantt chart showing Round Robin scheduling*
+
+#### MLFQ (Multi-Level Feedback Queue) - 2, 4, 6, FCFS 
+![FCFS Gantt Chart](docs/images/mlfq.png)
+*Gantt chart showing Multi-Level Feedback Queue scheduling*
 
 ## 👥 Partners
 
