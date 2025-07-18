@@ -112,7 +112,7 @@ class SchedulerGUI:
 
         ttk.Label(sim_frame, text="Context Switch Delay:").pack(anchor="w")
         self.context_entry = ttk.Entry(sim_frame)
-        self.context_entry.insert(0, "1")
+        self.context_entry.insert(0, "0")
         self.context_entry.pack(fill="x", pady=2)
 
         ttk.Button(sim_frame, text="Simulate ▶", command=self.run_scheduling).pack(pady=10)
@@ -158,7 +158,6 @@ class SchedulerGUI:
         self.style.configure("DarkLabelFrame.TLabelframe.Label", background=bg, foreground=fg)
         self.style.configure("TCombobox", fieldbackground=bg, foreground=fg)
 
-    # Custom Button Style
         self.style.configure("Custom.TButton",
                          background=button_bg,
                          foreground=button_fg,
@@ -344,13 +343,12 @@ class SchedulerGUI:
    
         if index == len(gantt) - 1:
             tick_color = "#f0f0f0" if self.dark_mode else "black"
-        self.gantt_canvas.create_text(x, 60, text=str(start), anchor="w", font=("Arial", 9), fill=tick_color)
+        self.gantt_canvas.create_text(x + width, 60, text=str(end), anchor="w", font=("Arial", 9), fill=tick_color)
 
         self.step_log.insert(tk.END, f"At time {start}: {pid} starts\n")
         self.step_log.see(tk.END)
 
         self.root.after(300, lambda: self.animate_gantt_chart(gantt, index + 1, x + width))
-
 
     def export_gantt_chart(self):
 
@@ -374,8 +372,6 @@ class SchedulerGUI:
             messagebox.showinfo("Success", f"Gantt chart saved as:\n{file_path}")
         except Exception as e:
             messagebox.showerror("Export Error", f"Failed to export image:\n{e}")
-
-
 if __name__ == "__main__":
     root = tk.Tk()
     app = SchedulerGUI(root)
