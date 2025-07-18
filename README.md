@@ -97,11 +97,12 @@ pip install pillow
 
 Here's an example of process data you can input into the system:
 
-| Process ID | Arrival Time | Burst Time |
-|------------|--------------|------------|
-| P1         | 0            | 5          |
-| P2         | 2            | 3          |
-| P3         | 4            | 1          |
+| Process ID | Arrival Time | Burst Time | Priority |
+|------------|--------------|------------|----------|
+| P1         | 0            | 8          | —        |
+| P2         | 1            | 4          | —        |
+| P3         | 2            | 9          | —        |
+| P4         | 3            | 5          | —        |
 
 ### Expected Output Examples
 
