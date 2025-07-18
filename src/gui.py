@@ -100,9 +100,11 @@ class SchedulerGUI:
        
         self.step_log = tk.Text(sim_frame, height=6, font=("Consolas", 9), wrap="word")
         self.step_log.pack(fill="both", expand=True, pady=5)
+        self.step_log.config(state="disabled")
 
         self.result_box = tk.Text(sim_frame, height=8, font=("Consolas", 10), wrap="word")
         self.result_box.pack(fill="both", expand=True, pady=5)
+        self.result_box.config(state="disabled")
 
         self.canvas_frame = ttk.Frame(self.main_frame)
         self.canvas_frame.pack(fill="both", expand=True)
@@ -181,8 +183,15 @@ class SchedulerGUI:
             for widget in entry:
                 widget.destroy()
         self.process_entries.clear()
+
+        self.result_box.config(state="normal")
         self.result_box.delete(1.0, tk.END)
+        self.result_box.config(state="disabled")
+
+        self.step_log.config(state="normal")
         self.step_log.delete(1.0, tk.END)
+        self.step_log.config(state="disabled")
+
         self.gantt_canvas.delete("all")
 
     def run_scheduling(self):
@@ -230,13 +239,15 @@ class SchedulerGUI:
             messagebox.showerror("Error", str(e))
             return
 
+        self.result_box.config(state="normal")
         self.result_box.delete(1.0, tk.END)
         self.result_box.insert(tk.END, f"=== {algo} Gantt Chart ===\n")
+        
         for pid, start, end in gantt:
             self.result_box.insert(tk.END, f"{pid}: {start} → {end}\n")
         
         self.last_metrics = metrics 
-
+        self.result_box.config(state="disabled")
 
         if gantt and CONTEXT_SWITCH_DELAY > 0:
             new_gantt = []
@@ -257,12 +268,14 @@ class SchedulerGUI:
             gantt = new_gantt
 
         if metrics:
+            self.result_box.config(state="normal")
             self.result_box.insert(tk.END, "\n=== Metrics ===\n")
             for entry in self.last_metrics.get("details", []):
                 self.result_box.insert(tk.END, f"{entry['pid']}: AT={entry['at']} BT={entry['bt']} CT={entry['ct']} "
                                                f"TAT={entry['tat']} RT={entry['rt']}\n")
             self.result_box.insert(tk.END, f"\nAverage TAT: {metrics['avg_tat']:.2f}")
             self.result_box.insert(tk.END, f"\nAverage RT: {metrics['avg_rt']:.2f}")
+            self.result_box.config(state="disabled")
 
         self.gantt_canvas.delete("all")
         self.animate_gantt_chart(gantt)
@@ -275,7 +288,9 @@ class SchedulerGUI:
             total_time = gantt[-1][2]
             total_width = total_time * 30
             self.gantt_canvas.config(scrollregion=(0, 0, total_width + 40, 140))
+            self.step_log.config(state="normal")
             self.step_log.delete(1.0, tk.END)
+            self.step_log.config(state="disabled")
 
         if index >= len(gantt):
             return
@@ -300,9 +315,10 @@ class SchedulerGUI:
    
         if index == len(gantt) - 1:
             self.gantt_canvas.create_text(x + width, 60, text=str(end), anchor="e", font=("Arial", 9))
-
+        self.step_log.config(state="normal")
         self.step_log.insert(tk.END, f"At time {start}: {pid} starts\n")
         self.step_log.see(tk.END)
+        self.step_log.config(state="disabled")
 
         self.root.after(300, lambda: self.animate_gantt_chart(gantt, index + 1, x + width))
 

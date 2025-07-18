@@ -1,6 +1,6 @@
 from collections import deque
 
-def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 24, float('inf')], context_delay=0):
+def mlfq_scheduling(processes, time_quantums=[17, 25, float('inf')], allotments=[17, 50, float('inf')], context_delay=0):
     num_levels = len(time_quantums)
     queues = [deque() for _ in range(num_levels)]
     time = 0
@@ -9,14 +9,13 @@ def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 
     gantt = []
     completed = 0
     response_time_set = set()
-    last_pid = None  
+    last_pid = None
 
     for p in processes:
         p.queue_level = 0
         p.remaining_allotment = allotments[0]
 
     processes.sort(key=lambda p: p.arrival_time)
-
     queues[0].append(processes[0])
     idx = 1
 
@@ -26,7 +25,6 @@ def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 
                 q = queues[level]
                 p = q.popleft()
 
-             
                 if last_pid is not None and last_pid != p.pid and context_delay > 0:
                     gantt.append(("CS", time, time + context_delay))
                     time += context_delay
@@ -35,17 +33,21 @@ def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 
                     p.response_time = time - p.arrival_time
                     response_time_set.add(p.pid)
 
-                qtime = min(time_quantums[level], p.remaining_time)
+                # FCFS in Q3 (last level)
+                if level == num_levels - 1:
+                    qtime = p.remaining_time
+                else:
+                    qtime = min(time_quantums[level], p.remaining_time)
+
                 start = time
                 end = time + qtime
 
-                gantt.append((f"{p.pid}(Q{level})", start, end))
+                gantt.append((f"{p.pid}(Q{level+1})", start, end))
 
                 time += qtime
                 p.remaining_time -= qtime
                 p.remaining_allotment -= qtime
 
-            
                 while idx < n and processes[idx].arrival_time <= time:
                     processes[idx].queue_level = 0
                     processes[idx].remaining_allotment = allotments[0]
@@ -56,15 +58,15 @@ def mlfq_scheduling(processes, time_quantums=[4, 8, 12, 16], allotments=[8, 16, 
                     p.completion_time = time
                     completed += 1
                 else:
-                    if p.remaining_allotment <= 0 and p.queue_level + 1 < num_levels:
+                    # Only demote if not in FCFS (last queue)
+                    if level < num_levels - 1 and p.remaining_allotment <= 0:
                         p.queue_level += 1
                         p.remaining_allotment = allotments[p.queue_level]
                     queues[p.queue_level].append(p)
 
-                last_pid = p.pid  
+                last_pid = p.pid
                 break
         else:
-         
             if idx < n:
                 queues[0].append(processes[idx])
                 time = processes[idx].arrival_time
