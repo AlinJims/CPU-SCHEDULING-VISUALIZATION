@@ -36,7 +36,6 @@ class SchedulerGUI:
         self.root = root
         self.root.title("CPU Scheduling Visualizer")
         self.root.geometry("1100x700")
-        self.root.resizable(False, False)
         self.process_entries = []
         self.algorithm = tk.StringVar(value="FCFS")
         self.dark_mode = False
@@ -51,7 +50,7 @@ class SchedulerGUI:
         top_layout = ttk.Frame(self.main_frame)
         top_layout.pack(fill="x", padx=10, pady=10)
 
-        config_frame = ttk.LabelFrame(top_layout, text="Process Configuration", style="DarkLabelFrame.TLabelframe")
+        config_frame = ttk.LabelFrame(top_layout, text="Process Configuration")
         config_frame.pack(side="left", fill="y", padx=(0, 10))
 
         ttk.Label(config_frame, text="Arrival Time:").pack(anchor="w")
@@ -65,40 +64,16 @@ class SchedulerGUI:
         btn_frame = ttk.Frame(config_frame)
         btn_frame.pack(fill="x", pady=5)
 
-        tk.Button(btn_frame, text="Generate Random", command=self.generate_random_processes,
-            bg="#002244" if self.dark_mode else "#ffffff",
-            fg="#f0f0f0" if self.dark_mode else "black",
-            activebackground="#003366",
-            activeforeground="#ffffff",
-            font=("Segoe UI", 10, "bold"),
-            relief="flat").pack(fill="x", pady=2)
-        tk.Button(btn_frame, text="Enqueue +", command=self.add_process_row,
-            bg="#002244" if self.dark_mode else "#ffffff",
-            fg="#f0f0f0" if self.dark_mode else "black",
-            activebackground="#003366",
-            activeforeground="#ffffff",
-            font=("Segoe UI", 10, "bold"),
-            relief="flat").pack(fill="x", pady=2)
-        tk.Button(btn_frame, text="Update", command=self.update_last_process,
-            bg="#002244" if self.dark_mode else "#ffffff",
-            fg="#f0f0f0" if self.dark_mode else "black",
-            activebackground="#003366",
-            activeforeground="#ffffff",
-            font=("Segoe UI", 10, "bold"),
-            relief="flat").pack(fill="x", pady=2)
-        tk.Button(btn_frame, text="Clear All", command=self.clear_all_processes,
-            bg="#002244" if self.dark_mode else "#ffffff",
-            fg="#ffffff" if self.dark_mode else "black",
-            activebackground="#003366",
-            activeforeground="#ffffff",
-            font=("Segoe UI", 10, "bold"),
-            relief="flat").pack(fill="x", pady=2)
+        ttk.Button(btn_frame, text="Generate Random", command=self.generate_random_processes).pack(fill="x", pady=2)
+        ttk.Button(btn_frame, text="Enqueue +", command=self.add_process_row).pack(fill="x", pady=2)
+        ttk.Button(btn_frame, text="Update", command=self.update_last_process).pack(fill="x", pady=2)
+        ttk.Button(btn_frame, text="Clear All", command=self.clear_all_processes).pack(fill="x", pady=2)
 
         self.table_frame = ttk.Frame(config_frame)
         self.table_frame.pack(fill="x", pady=10)
         self.add_process_row()
 
-        sim_frame = ttk.LabelFrame(top_layout, text="Simulation", style="DarkLabelFrame.TLabelframe")
+        sim_frame = ttk.LabelFrame(top_layout, text="Simulation")
         sim_frame.pack(side="left", fill="both", expand=True)
 
         ttk.Label(sim_frame, text="Choose Algorithm").pack(anchor="w")
@@ -112,7 +87,7 @@ class SchedulerGUI:
 
         ttk.Label(sim_frame, text="Context Switch Delay:").pack(anchor="w")
         self.context_entry = ttk.Entry(sim_frame)
-        self.context_entry.insert(0, "0")
+        self.context_entry.insert(0, "1")
         self.context_entry.pack(fill="x", pady=2)
 
         ttk.Button(sim_frame, text="Simulate ▶", command=self.run_scheduling).pack(pady=10)
@@ -146,29 +121,12 @@ class SchedulerGUI:
     def set_theme(self, mode):
         bg = "#1e1e1e" if mode == "dark" else "white"
         fg = "#f0f0f0" if mode == "dark" else "black"
-        button_bg = "#002244" if mode == "dark" else "#e0e0e0"
-        button_fg = "#f0f0f0" if mode == "dark" else "black"
-        hover_bg = "#003366" if mode == "dark" else "#d0d0d0"
-    
         self.root.configure(bg=bg)
         self.style.configure("TFrame", background=bg)
         self.style.configure("TLabel", background=bg, foreground=fg)
         self.style.configure("TLabelFrame", background=bg, foreground=fg)
-        self.style.configure("DarkLabelFrame.TLabelframe", background=bg)
-        self.style.configure("DarkLabelFrame.TLabelframe.Label", background=bg, foreground=fg)
+        self.style.configure("TButton", background=bg, foreground=fg)
         self.style.configure("TCombobox", fieldbackground=bg, foreground=fg)
-
-        self.style.configure("Custom.TButton",
-                         background=button_bg,
-                         foreground=button_fg,
-                         borderwidth=1,
-                         focusthickness=3,
-                         focuscolor='none',
-                         font=("Segoe UI", 10, "bold"))
-        self.style.map("Custom.TButton",
-                   background=[("active", hover_bg), ("pressed", "#001933")],
-                   foreground=[("active", button_fg), ("pressed", button_fg)])
-
         self.result_box.configure(bg=bg, fg=fg, insertbackground=fg)
         self.gantt_canvas.configure(bg=bg)
         self.step_log.configure(bg=bg, fg=fg, insertbackground=fg)
@@ -337,18 +295,17 @@ class SchedulerGUI:
         self.gantt_canvas.create_rectangle(x, 10, x + width, 10 + height, fill=color, outline="black")
         self.gantt_canvas.create_text(x + width // 2, 30, text=label)
 
-        tick_color = "#f0f0f0" if self.dark_mode else "black"
-        self.gantt_canvas.create_text(x, 60, text=str(start), anchor="w", font=("Arial", 9), fill=tick_color)
+        self.gantt_canvas.create_text(x, 60, text=str(start), anchor="w", font=("Arial", 9))
 
    
         if index == len(gantt) - 1:
-            tick_color = "#f0f0f0" if self.dark_mode else "black"
-        self.gantt_canvas.create_text(x + width, 60, text=str(end), anchor="w", font=("Arial", 9), fill=tick_color)
+            self.gantt_canvas.create_text(x + width, 60, text=str(end), anchor="e", font=("Arial", 9))
 
         self.step_log.insert(tk.END, f"At time {start}: {pid} starts\n")
         self.step_log.see(tk.END)
 
         self.root.after(300, lambda: self.animate_gantt_chart(gantt, index + 1, x + width))
+
 
     def export_gantt_chart(self):
 
@@ -372,6 +329,8 @@ class SchedulerGUI:
             messagebox.showinfo("Success", f"Gantt chart saved as:\n{file_path}")
         except Exception as e:
             messagebox.showerror("Export Error", f"Failed to export image:\n{e}")
+
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = SchedulerGUI(root)
