@@ -68,8 +68,14 @@ class SchedulerGUI:
         self.table_frame.pack(fill="x", pady=10)
         self.add_process_row()
 
-        sim_frame = ttk.LabelFrame(top_layout, text="Simulation")
-        sim_frame.pack(side="left", fill="both", expand=True)
+        sim_wrapper = ttk.Frame(top_layout)
+        sim_wrapper.pack(side="left", fill="both", expand=True)
+
+        sim_frame = ttk.LabelFrame(sim_wrapper, text="Simulation")
+        sim_frame.pack(side="left", fill="both", expand=True, padx=(0, 10))
+        
+        control_frame = ttk.LabelFrame(sim_wrapper, text="Controls")
+        control_frame.pack(side="left", fill="y")
 
         ttk.Label(sim_frame, text="Choose Algorithm").pack(anchor="w")
         algo_dropdown = ttk.Combobox(sim_frame, textvariable=self.algorithm,
@@ -98,10 +104,11 @@ class SchedulerGUI:
         self.context_entry.insert(0, "1")
         self.context_entry.pack(fill="x", pady=2)
 
-        ttk.Button(sim_frame, text="Simulate ▶", command=self.run_scheduling).pack(pady=10)
-        ttk.Button(sim_frame, text="Dark Mode", command=self.toggle_dark_mode).pack()
-        ttk.Button(sim_frame, text="Export Gantt Chart as PNG", command=self.export_gantt_chart).pack(pady=5)
-        ttk.Button(sim_frame, text="Export Metrics as CSV", command=self.export_metrics_csv).pack(pady=5)
+        ttk.Button(control_frame, text="Simulate ▶", command=self.run_scheduling).pack(fill="x", pady=5, padx=5)
+        ttk.Button(control_frame, text="Dark Mode", command=self.toggle_dark_mode).pack(fill="x", pady=5, padx=5)
+        ttk.Button(control_frame, text="Export Gantt Chart as PNG", command=self.export_gantt_chart).pack(fill="x", pady=5, padx=5)
+        ttk.Button(control_frame, text="Export Metrics as CSV", command=self.export_metrics_csv).pack(fill="x", pady=5, padx=5)
+
 
         self.step_log = tk.Text(sim_frame, height=6, font=("Consolas", 9), wrap="word")
         self.step_log.pack(fill="both", expand=True, pady=5)

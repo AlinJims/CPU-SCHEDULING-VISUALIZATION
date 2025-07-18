@@ -98,5 +98,6 @@ pip install pillow
 * [Tkinter Documentation](https://docs.python.org/3/library/tkinter.html)
 * [Pillow Documentation](https://python-pillow.org/)
 * [GeeksforGeeks CPU Scheduling](https://www.geeksforgeeks.org/cpu-scheduling-in-operating-systems/)
+* [Simple Snippets CPU Scheduling Tutorials](https://www.youtube.com/watch?v=AiVKIdGheEU&list=PLIY8eNdw5tW_lHyageTADFKBt9weJXndE)
 * Inspired by OS coursework and CPU scheduling theory by Sir Bayocot
 
