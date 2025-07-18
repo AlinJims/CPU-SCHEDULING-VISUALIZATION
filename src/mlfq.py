@@ -1,6 +1,11 @@
 from collections import deque
 
-def mlfq_scheduling(processes, time_quantums=[17, 25, float('inf')], allotments=[17, 50, float('inf')], context_delay=0):
+def mlfq_scheduling(
+    processes,
+    time_quantums=[4, 8, 16, float('inf')],
+    allotments=[8, 16, 24, float('inf')],
+    context_delay=0
+):
     num_levels = len(time_quantums)
     queues = [deque() for _ in range(num_levels)]
     time = 0
@@ -33,7 +38,6 @@ def mlfq_scheduling(processes, time_quantums=[17, 25, float('inf')], allotments=
                     p.response_time = time - p.arrival_time
                     response_time_set.add(p.pid)
 
-                # FCFS in Q3 (last level)
                 if level == num_levels - 1:
                     qtime = p.remaining_time
                 else:
@@ -58,7 +62,6 @@ def mlfq_scheduling(processes, time_quantums=[17, 25, float('inf')], allotments=
                     p.completion_time = time
                     completed += 1
                 else:
-                    # Only demote if not in FCFS (last queue)
                     if level < num_levels - 1 and p.remaining_allotment <= 0:
                         p.queue_level += 1
                         p.remaining_allotment = allotments[p.queue_level]

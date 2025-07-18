@@ -4,8 +4,7 @@ from srtf import srtf_scheduling
 from rr import rr_scheduling
 from mlfq import mlfq_scheduling
 
-
-def run_scheduling(algo, processes, quantum=None, context_delay=0): 
+def run_scheduling(algo, processes, quantum=None, time_quantums=None, context_delay=0): 
     print(f"[DEBUG] Running scheduling algorithm: {algo}")
     if algo == "FCFS":
         gantt = fcfs_scheduling(processes, context_delay=context_delay)
@@ -20,7 +19,7 @@ def run_scheduling(algo, processes, quantum=None, context_delay=0):
             raise ValueError("Quantum time required for Round Robin")
         return rr_scheduling(processes, quantum, context_delay=context_delay)
     elif algo == "MLFQ":
-        return mlfq_scheduling(processes, context_delay=context_delay)
+        return mlfq_scheduling(processes, time_quantums=time_quantums, context_delay=context_delay)
     else:
         raise ValueError(f"Unknown algorithm: {algo}")
 

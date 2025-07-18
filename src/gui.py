@@ -6,21 +6,16 @@ from scheduler import run_scheduling
 from tkinter import filedialog
 from PIL import Image, ImageGrab
 
-
-
-
 class SchedulerGUI:
     def export_metrics_csv(self):
         if not hasattr(self, "last_metrics") or not self.last_metrics:
             messagebox.showwarning("No Metrics", "No metrics available to export. Run a simulation first.")
             return
-
         file_path = filedialog.asksaveasfilename(defaultextension=".csv",
                                                  filetypes=[("CSV Files", "*.csv")],
                                                  title="Save Metrics As")
         if not file_path:
             return
-
         try:
             with open(file_path, "w") as f:
                 f.write("PID,Arrival Time,Burst Time,Completion Time,TAT,RT\n")
@@ -85,6 +80,19 @@ class SchedulerGUI:
         self.quantum_entry = ttk.Entry(sim_frame)
         self.quantum_entry.pack(fill="x", pady=2)
 
+        ttk.Label(sim_frame, text="MLFQ Time Quantums (Q0-Q2):", font=("Segoe UI", 10, "bold")).pack(anchor="w", pady=(10,0))
+        self.q0_entry = ttk.Entry(sim_frame)
+        self.q0_entry.pack(fill="x", pady=1)
+        self.q0_entry.insert(0, "4")
+
+        self.q1_entry = ttk.Entry(sim_frame)
+        self.q1_entry.pack(fill="x", pady=1)
+        self.q1_entry.insert(0, "8")
+
+        self.q2_entry = ttk.Entry(sim_frame)
+        self.q2_entry.pack(fill="x", pady=1)
+        self.q2_entry.insert(0, "16")
+
         ttk.Label(sim_frame, text="Context Switch Delay:").pack(anchor="w")
         self.context_entry = ttk.Entry(sim_frame)
         self.context_entry.insert(0, "1")
@@ -95,9 +103,6 @@ class SchedulerGUI:
         ttk.Button(sim_frame, text="Export Gantt Chart as PNG", command=self.export_gantt_chart).pack(pady=5)
         ttk.Button(sim_frame, text="Export Metrics as CSV", command=self.export_metrics_csv).pack(pady=5)
 
-
-
-       
         self.step_log = tk.Text(sim_frame, height=6, font=("Consolas", 9), wrap="word")
         self.step_log.pack(fill="both", expand=True, pady=5)
         self.step_log.config(state="disabled")
@@ -165,11 +170,9 @@ class SchedulerGUI:
     def update_last_process(self):
         if not self.process_entries:
             self.add_process_row()
-
         pid = f"P{len(self.process_entries)}"
         arrival = self.arrival_entry.get()
         burst = self.burst_entry.get()
-
         last_row = self.process_entries[-1]
         last_row[0].delete(0, tk.END)
         last_row[0].insert(0, pid)
@@ -183,15 +186,12 @@ class SchedulerGUI:
             for widget in entry:
                 widget.destroy()
         self.process_entries.clear()
-
         self.result_box.config(state="normal")
         self.result_box.delete(1.0, tk.END)
         self.result_box.config(state="disabled")
-
         self.step_log.config(state="normal")
         self.step_log.delete(1.0, tk.END)
         self.step_log.config(state="disabled")
-
         self.gantt_canvas.delete("all")
 
     def run_scheduling(self):
@@ -205,9 +205,9 @@ class SchedulerGUI:
             except ValueError:
                 messagebox.showerror("Invalid Input", "Please enter valid integers for arrival and burst times.")
                 return
-
         algo = self.algorithm.get()
         quantum = None
+        qlist = None
         if algo == "RR":
             try:
                 quantum = int(self.quantum_entry.get())
@@ -216,9 +216,16 @@ class SchedulerGUI:
             except ValueError:
                 messagebox.showerror("Invalid Quantum", "Please enter a valid positive integer for time quantum.")
                 return
-            
+        elif algo == "MLFQ":
+            try:
+                q0 = int(self.q0_entry.get())
+                q1 = int(self.q1_entry.get())
+                q2 = int(self.q2_entry.get())
+                qlist = [q0, q1, q2, float("inf")]
+            except ValueError:
+                messagebox.showerror("Invalid MLFQ Quantum", "Please enter valid integers for Q0-Q2.")
+                return
         self.last_metrics = None
-
         global CONTEXT_SWITCH_DELAY
         try:
             CONTEXT_SWITCH_DELAY = int(self.context_entry.get())
@@ -227,9 +234,8 @@ class SchedulerGUI:
         except ValueError:
             messagebox.showerror("Invalid Context Switch Delay", "Please enter a non-negative integer.")
             return
-
         try:
-            result = run_scheduling(algo, processes, quantum=quantum, context_delay=CONTEXT_SWITCH_DELAY)
+            result = run_scheduling(algo, processes, quantum=quantum, time_quantums=qlist, context_delay=CONTEXT_SWITCH_DELAY)
             if isinstance(result, tuple) and len(result) == 2:
                 gantt, metrics = result
             else:
@@ -238,26 +244,20 @@ class SchedulerGUI:
         except Exception as e:
             messagebox.showerror("Error", str(e))
             return
-
         self.result_box.config(state="normal")
         self.result_box.delete(1.0, tk.END)
         self.result_box.insert(tk.END, f"=== {algo} Gantt Chart ===\n")
-        
         for pid, start, end in gantt:
             self.result_box.insert(tk.END, f"{pid}: {start} → {end}\n")
-        
         self.last_metrics = metrics 
         self.result_box.config(state="disabled")
-
         if gantt and CONTEXT_SWITCH_DELAY > 0:
             new_gantt = []
             last_end = 0
             for i, (pid, start, end) in enumerate(gantt):
                 if i > 0 and start > last_end:
-                
                     pass
                 elif i > 0:
-              
                     delay_start = last_end
                     delay_end = last_end + CONTEXT_SWITCH_DELAY
                     new_gantt.append(("-", delay_start, delay_end))
@@ -266,7 +266,6 @@ class SchedulerGUI:
                 new_gantt.append((pid, start, end))
                 last_end = end
             gantt = new_gantt
-
         if metrics:
             self.result_box.config(state="normal")
             self.result_box.insert(tk.END, "\n=== Metrics ===\n")
@@ -276,7 +275,6 @@ class SchedulerGUI:
             self.result_box.insert(tk.END, f"\nAverage TAT: {metrics['avg_tat']:.2f}")
             self.result_box.insert(tk.END, f"\nAverage RT: {metrics['avg_rt']:.2f}")
             self.result_box.config(state="disabled")
-
         self.gantt_canvas.delete("all")
         self.animate_gantt_chart(gantt)
 
@@ -291,61 +289,46 @@ class SchedulerGUI:
             self.step_log.config(state="normal")
             self.step_log.delete(1.0, tk.END)
             self.step_log.config(state="disabled")
-
         if index >= len(gantt):
             return
-
         pid, start, end = gantt[index]
         scale = 30
         height = 40
         width = (end - start) * scale
-
         if pid == "-":
             color = "#cccccc"
             label = "CS"
         else:
             color = f"#{hex(hash(pid) & 0xFFFFFF)[2:]:0>6}"
             label = pid
-
         self.gantt_canvas.create_rectangle(x, 10, x + width, 10 + height, fill=color, outline="black")
         self.gantt_canvas.create_text(x + width // 2, 30, text=label)
-
         self.gantt_canvas.create_text(x, 60, text=str(start), anchor="w", font=("Arial", 9))
-
-   
         if index == len(gantt) - 1:
             self.gantt_canvas.create_text(x + width, 60, text=str(end), anchor="e", font=("Arial", 9))
         self.step_log.config(state="normal")
         self.step_log.insert(tk.END, f"At time {start}: {pid} starts\n")
         self.step_log.see(tk.END)
         self.step_log.config(state="disabled")
-
         self.root.after(300, lambda: self.animate_gantt_chart(gantt, index + 1, x + width))
 
-
     def export_gantt_chart(self):
-
         file_path = filedialog.asksaveasfilename(defaultextension=".png",
                                                  filetypes=[("PNG Files", "*.png")],
                                                  title="Save Gantt Chart As")
         if not file_path:
             return 
-
-        
         self.root.update() 
         x = self.gantt_canvas.winfo_rootx()
         y = self.gantt_canvas.winfo_rooty()
         x1 = x + self.gantt_canvas.winfo_width()
         y1 = y + self.gantt_canvas.winfo_height()
-
-   
         try:
             img = ImageGrab.grab(bbox=(x, y, x1, y1))
             img.save(file_path)
             messagebox.showinfo("Success", f"Gantt chart saved as:\n{file_path}")
         except Exception as e:
             messagebox.showerror("Export Error", f"Failed to export image:\n{e}")
-
 
 if __name__ == "__main__":
     root = tk.Tk()
