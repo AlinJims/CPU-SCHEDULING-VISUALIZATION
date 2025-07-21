@@ -88,7 +88,7 @@ pip install pillow
 ## 🖼️ Screenshots
 
 ### Main Application Interface
-![Main Interface](docs/images/maininterface.png)
+![Main Interface](docs/images/MainInterface.png)
 *The main window showing process input fields and algorithm selection*
 
 ## 📊 Sample Input and Output
@@ -107,23 +107,23 @@ Here's an example of process data you can input into the system:
 ### Expected Output Examples
 
 #### FCFS (First-Come, First-Served)
-![FCFS Gantt Chart](docs/images/fcfs.png)
+![FCFS Gantt Chart](docs/images/FCFS.png)
 *Gantt chart showing First-Come, First-Served scheduling*
 
 #### SJF (Shortest Job First)
-![FCFS Gantt Chart](docs/images/sjf.png)
+![FCFS Gantt Chart](docs/images/SJF.png)
 *Gantt chart showing Shortest Job First*
 
 #### SRTF (Shortest Remaining Time First)
-![FCFS Gantt Chart](docs/images/srtf.png)
+![FCFS Gantt Chart](docs/images/SRTF.png)
 *Gantt chart showing Shortest Remaining Time First scheduling*
 
 #### RR (Round Robin) - 3 Time Quantum
-![FCFS Gantt Chart](docs/images/rr.png)
+![FCFS Gantt Chart](docs/images/RR.png)
 *Gantt chart showing Round Robin scheduling*
 
 #### MLFQ (Multi-Level Feedback Queue) - 2, 4, 6, FCFS 
-![FCFS Gantt Chart](docs/images/mlfq.png)
+![FCFS Gantt Chart](docs/images/MLFQ.png)
 *Gantt chart showing Multi-Level Feedback Queue scheduling*
 
 ## 👥 Partners
